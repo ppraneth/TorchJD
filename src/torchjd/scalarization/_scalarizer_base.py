@@ -13,7 +13,8 @@ class Scalarizer(nn.Module, ABC):
         super().__init__()
 
     @abstractmethod
-    def forward(self, losses: Tensor, /) -> Tensor: ...
+    def forward(self, losses: Tensor, /) -> Tensor:
+        """Computes the scalarization from input tensor."""
 
     def __call__(self, losses: Tensor, /) -> Tensor:
         """

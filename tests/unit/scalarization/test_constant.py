@@ -2,12 +2,14 @@ from contextlib import nullcontext as does_not_raise
 
 import torch
 from pytest import mark, raises
+from torch import Tensor
 from utils.contexts import ExceptionContext
 from utils.tensors import ones_, tensor_
 
 from torchjd.scalarization import Constant
 
 from ._asserts import assert_grad_flow, assert_returns_scalar
+from ._inputs import all_inputs
 
 
 def test_value() -> None:
@@ -16,17 +18,15 @@ def test_value() -> None:
     torch.testing.assert_close(Constant(weights)(losses), tensor_(3.0))
 
 
-@mark.parametrize("shape", [(5,), (3, 4), (2, 3, 4)])
-def test_expected_structure(shape: tuple[int, ...]) -> None:
-    losses = ones_(shape)
-    weights = ones_(shape)
+@mark.parametrize("losses", all_inputs)
+def test_expected_structure(losses: Tensor) -> None:
+    weights = ones_(losses.shape)
     assert_returns_scalar(Constant(weights), losses)
 
 
-@mark.parametrize("shape", [(5,), (3, 4), (2, 3, 4)])
-def test_grad_flow(shape: tuple[int, ...]) -> None:
-    losses = ones_(shape)
-    weights = ones_(shape) / losses.numel()
+@mark.parametrize("losses", all_inputs)
+def test_grad_flow(losses: Tensor) -> None:
+    weights = ones_(losses.shape)
     assert_grad_flow(Constant(weights), losses)
 
 
