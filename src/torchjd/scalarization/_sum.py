@@ -5,8 +5,8 @@ from ._scalarizer_base import Scalarizer
 
 class Sum(Scalarizer):
     """
-    :class:`~torchjd.scalarization.Scalarizer` that returns the sum of the input tensor of losses.
+    :class:`~torchjd.scalarization.Scalarizer` that returns the sum of the input tensor of values.
     """
 
-    def forward(self, losses: Tensor, /) -> Tensor:
-        return losses.sum()
+    def forward(self, values: Tensor, /) -> Tensor:
+        return values.sum()

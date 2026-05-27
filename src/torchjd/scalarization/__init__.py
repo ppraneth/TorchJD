@@ -1,6 +1,6 @@
 """
-A :class:`~torchjd.scalarization.Scalarizer` reduces a tensor of losses of any shape into a single
-scalar loss that can be optimized with standard gradient descent. This is the simple baseline
+A :class:`~torchjd.scalarization.Scalarizer` reduces a tensor of values of any shape into a single
+scalar value. This is the simple baseline
 against which :class:`Aggregators <torchjd.aggregation.Aggregator>` are compared: instead of
 combining the per-loss gradients via the Jacobian or its Gramian, a
 :class:`~torchjd.scalarization.Scalarizer` combines the losses directly, and a standard call to
