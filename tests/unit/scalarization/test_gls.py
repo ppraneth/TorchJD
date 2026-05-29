@@ -10,8 +10,8 @@ from ._asserts import (
     assert_permutation_invariant,
     assert_returns_scalar,
 )
+from ._inputs import shapes
 
-shapes: list[list[int]] = [[], [5], [3, 4], [2, 3, 4]]
 positive_inputs: list[Tensor] = [rand_(shape) + 1 for shape in shapes]
 
 
