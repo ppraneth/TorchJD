@@ -16,7 +16,7 @@ Abstract base class
     :maxdepth: 1
 
     constant.rst
-    gls.rst
+    gmean.rst
     mean.rst
     random.rst
     sum.rst

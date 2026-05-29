@@ -20,10 +20,10 @@ tensor(2.)
 """
 
 from ._constant import Constant
-from ._gls import GLS
+from ._gmean import GMean
 from ._mean import Mean
 from ._random import Random
 from ._scalarizer_base import Scalarizer
 from ._sum import Sum
 
-__all__ = ["Constant", "GLS", "Mean", "Random", "Scalarizer", "Sum"]
+__all__ = ["Constant", "GMean", "Mean", "Random", "Scalarizer", "Sum"]

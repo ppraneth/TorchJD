@@ -4,7 +4,7 @@ from torch import Tensor
 from ._scalarizer_base import Scalarizer
 
 
-class GLS(Scalarizer):
+class GMean(Scalarizer):
     """
     :class:`~torchjd.scalarization.Scalarizer` that returns the geometric mean of the input tensor
     of values, as studied in `MultiNet++: Multi-Stream Feature Aggregation and Geometric Loss
@@ -13,4 +13,6 @@ class GLS(Scalarizer):
     """
 
     def forward(self, values: Tensor, /) -> Tensor:
+        if (values <= 0.0).any():
+            return (values * 0.0).sum()
         return torch.exp(torch.log(values).mean())
