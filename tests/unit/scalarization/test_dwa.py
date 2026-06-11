@@ -9,12 +9,6 @@ from ._asserts import assert_grad_flow, assert_returns_scalar
 from ._inputs import all_inputs
 
 
-def test_value_bootstrap() -> None:
-    # Before two epochs have completed, DWA uses uniform weights (so it acts like a sum).
-    values = tensor_([1.0, 2.0, 4.0])
-    torch.testing.assert_close(DWA()(values), tensor_(7.0))
-
-
 def test_uniform_weights_for_first_two_epochs() -> None:
     dwa = DWA(temperature=2.0)
     # Epoch 1: no completed epoch yet, so weights are uniform (sum).
