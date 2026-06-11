@@ -15,27 +15,28 @@ class DWA(Scalarizer, Stateful):
     <https://openaccess.thecvf.com/content_CVPR_2019/papers/Liu_End-To-End_Multi-Task_Learning_With_Attention_CVPR_2019_paper.pdf>`_.
 
     DWA weights each value by how quickly its loss has been decreasing relative to the others. At
-    epoch :math:`t`, the values are combined as
+    epoch :math:`t`, the current batch's values are combined as
 
     .. math::
-        \sum_k \lambda_k(t)\, L_k(t), \qquad
+        \sum_k \lambda_k(t)\, \ell_k, \qquad
         \lambda_k(t) = \frac{K \exp(w_k(t-1) / T)}{\sum_i \exp(w_i(t-1) / T)}, \qquad
         w_k(t-1) = \frac{L_k(t-1)}{L_k(t-2)}
 
     where:
 
-    - :math:`L_k(t)` is the :math:`k`-th value (typically the loss of task :math:`k`) at epoch
-      :math:`t`, averaged over the batches of that epoch;
-    - :math:`w_k(t-1)` is the relative descending rate of task :math:`k` (the ratio of its average
-      losses over the two previous epochs);
-    - :math:`T` is the temperature (a larger :math:`T` makes the weights more uniform);
-    - :math:`K` is the number of values, and the factor :math:`K` keeps :math:`\sum_k \lambda_k = K`.
+    - :math:`\ell_k` is the :math:`k`-th value being scalarized (typically the current batch's loss);
+    - :math:`L_k(t)` is the :math:`k`-th value averaged over epoch :math:`t` (used only for the
+      weights);
+    - :math:`w_k(t-1)` is the relative descending rate: the ratio of average losses over the two
+      previous epochs;
+    - :math:`T` is the temperature; a larger :math:`T` makes the weights more uniform;
+    - :math:`K` is the number of values; the factor :math:`K` keeps :math:`\sum_k \lambda_k = K`.
 
-    The weights depend only on the average losses of the two previous epochs, so they are computed
-    from past values and require no gradient. At each call, the current epoch's losses are
-    accumulated, and :meth:`step` must be called once at the end of each epoch to finalize that
-    epoch's average loss and roll the history forward. During the first two epochs (before two
-    averages are available) the weights are uniform.
+    The weights use only the two previous epochs' average losses, so they need no gradient. At each
+    call, the scalarization is returned and the current batch's losses are summed to the current
+    epoch's loss sums. :meth:`step` must then be called once at the end of each epoch to finalize
+    that epoch's average loss and roll the history forward. During the first two epochs, before two
+    averages are available, the weights are uniform.
 
     :param temperature: The temperature :math:`T`. Must be strictly positive. Larger values make the
         weights more uniform. The paper uses ``2.0``.
