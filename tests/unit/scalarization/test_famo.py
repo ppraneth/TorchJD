@@ -44,7 +44,7 @@ def test_value_gradient_matches_formula() -> None:
 
 def test_int_shape_matches_tuple_shape() -> None:
     values = tensor_([1.0, 2.0, 4.0])
-    assert FAMO(3).w.shape == (3,)
+    assert FAMO(3)._w.shape == (3,)
     torch.testing.assert_close(_famo(3)(values), _famo((3,))(values))
 
 
@@ -60,41 +60,39 @@ def test_grad_flow(values: Tensor) -> None:
 
 def test_forward_does_not_write_logit_grad() -> None:
     # The weights are detached inside `forward`, so backward populates the values' gradient but
-    # never the logits' gradient (those are set by `update` instead).
+    # never the logits' gradient (those are updated by `update` instead).
     famo = _famo(2)
     values = tensor_([1.0, 2.0]).requires_grad_()
     famo(values).backward()
     assert values.grad is not None
-    assert famo.w.grad is None
+    assert famo._w.grad is None
 
 
-def test_update_sets_finite_logit_grad() -> None:
+def test_update_steps_the_logits() -> None:
     famo = _famo(2)
     famo(tensor_([1.0, 2.0]))
     famo.update(tensor_([0.5, 1.5]))
-    assert famo.w.grad is not None
-    assert famo.w.grad.isfinite().all()
+    assert famo._w.detach().isfinite().all()
+    assert not torch.equal(famo._w.detach(), zeros_((2,)))
+
+
+def test_update_clears_logit_grad() -> None:
+    # After stepping its own optimizer, FAMO clears the logit gradient so it cannot leak into a user
+    # optimizer the logits were mistakenly added to.
+    famo = _famo(2)
+    famo(tensor_([1.0, 2.0]))
+    famo.update(tensor_([0.5, 1.5]))
+    assert famo._w.grad is None
 
 
 def test_update_uses_last_forward_losses() -> None:
     # `update` compares the losses from the most recent `forward` against the ones it receives. When
-    # they are equal, the change is zero, so the logit gradient is zero.
+    # they are equal, the change is zero, so the logits do not move.
     famo = _famo(2)
     famo(tensor_([5.0, 5.0]))
     famo(tensor_([1.0, 4.0]))
     famo.update(tensor_([1.0, 4.0]))
-    torch.testing.assert_close(famo.w.grad, zeros_((2,)))
-
-
-def test_is_trainable_via_update() -> None:
-    # The full two-call protocol: forward, then update with the recomputed losses, then step the
-    # logit optimizer. The logits should move away from their initial zeros.
-    famo = _famo(2)
-    optimizer = torch.optim.Adam(famo.parameters(), lr=0.1)
-    famo(tensor_([2.0, 1.0]))
-    famo.update(tensor_([1.0, 1.0]))
-    optimizer.step()
-    assert not torch.equal(famo.w.detach(), zeros_((2,)))
+    torch.testing.assert_close(famo._w.detach(), zeros_((2,)))
 
 
 def test_update_before_forward_raises() -> None:
@@ -152,18 +150,26 @@ def test_min_losses_shifts_values() -> None:
     torch.testing.assert_close(famo(values), expected)
 
 
+@mark.parametrize("lr", [-1.0])
+def test_negative_lr_raises(lr: float) -> None:
+    with raises(ValueError):
+        FAMO(2, lr=lr)
+
+
+@mark.parametrize("weight_decay", [-1.0])
+def test_negative_weight_decay_raises(weight_decay: float) -> None:
+    with raises(ValueError):
+        FAMO(2, weight_decay=weight_decay)
+
+
 def test_reset() -> None:
     famo = _famo(2)
-    with torch.no_grad():
-        famo.w.add_(1.0)
     famo(tensor_([1.0, 2.0]))
+    famo.update(tensor_([0.5, 1.5]))
     famo.reset()
-    torch.testing.assert_close(famo.w.detach(), zeros_((2,)))
+    torch.testing.assert_close(famo._w.detach(), zeros_((2,)))
     assert famo._prev_losses is None
-
-
-def test_logits_are_a_learnable_parameter() -> None:
-    assert len(list(FAMO(2).parameters())) == 1
+    assert famo._optimizer is None
 
 
 def test_nan_propagates_for_value_below_bound() -> None:
@@ -174,6 +180,6 @@ def test_nan_propagates_for_value_below_bound() -> None:
 
 
 def test_representations() -> None:
-    assert repr(FAMO(3)) == "FAMO(shape=(3,))"
-    assert repr(FAMO((2, 3))) == "FAMO(shape=(2, 3))"
+    assert repr(FAMO(3)) == "FAMO(shape=(3,), lr=0.025, weight_decay=0.001)"
+    assert repr(FAMO((2, 3))) == "FAMO(shape=(2, 3), lr=0.025, weight_decay=0.001)"
     assert str(FAMO(3)) == "FAMO"
