@@ -16,15 +16,15 @@ class PBI(Scalarizer):
     direction and a component perpendicular to it, and penalizes the latter:
 
     .. math::
-        d_1 = (L - z^*)^\top \hat r, \qquad
-        d_2 = \lVert (L - z^*) - d_1 \hat r \rVert, \qquad
+        d_1 = (L - z^*)^\top \hat w, \qquad
+        d_2 = \lVert (L - z^*) - d_1 \hat w \rVert, \qquad
         d_1 + \theta\, d_2,
 
     where:
 
     - :math:`L_i` is the :math:`i`-th input value (the :math:`i`-th objective);
     - :math:`z^*` is the reference (ideal) point (the ``reference`` parameter);
-    - :math:`\hat r = r / \lVert r \rVert` is the normalized preference direction (the ``weights``
+    - :math:`\hat w = w / \lVert w \rVert` is the normalized preference direction (the ``weights``
       parameter);
     - :math:`d_1` is the distance along the preference direction and :math:`d_2` is the distance to
       it;
@@ -34,7 +34,7 @@ class PBI(Scalarizer):
         be non-negative. A value of ``0`` reduces PBI to the projection onto the preference
         direction. The paper uses ``5`` in its experiments; there is no single best value, and the
         paper notes that a too large or too small value worsens the result.
-    :param weights: The preference vector :math:`r`, giving the direction along which the values are
+    :param weights: The preference vector :math:`w`, giving the direction along which the values are
         decomposed. Its values should be non-negative. It must have the same shape as the values
         passed at call time. To approximate the whole Pareto front rather than a single trade-off, it
         should be re-sampled from a Dirichlet distribution and reassigned before every call, e.g. for
